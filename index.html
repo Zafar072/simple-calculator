@@ -1,295 +1,37 @@
-<!DOCTYPE html><html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zafar's Calculator</title>
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#202636">
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101827"><title>Zafar's Calculator</title>
 <style>
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  background: #10131c;
-  font-family: Arial, sans-serif;
-  color: white;
-  padding: 15px;
-}
-
-.calculator {
-  width: min(100%, 360px);
-  padding: 22px;
-  border-radius: 24px;
-  background: #202636;
-  box-shadow: 0 12px 35px #0006;
-}
-
-h1 {
-  font-size: 25px;
-  text-align: center;
-  margin: 0 0 20px;
-}
-
-#expression {
-  min-height: 28px;
-  overflow-wrap: anywhere;
-  text-align: right;
-  color: #aab4c8;
-  font-size: 17px;
-  padding: 5px 3px;
-}
-
-#display {
-  width: 100%;
-  height: 65px;
-  margin-bottom: 18px;
-  padding: 10px;
-  border: none;
-  border-radius: 12px;
-  background: #111622;
-  color: white;
-  text-align: right;
-  font-size: 32px;
-}
-
-.buttons {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-button {
-  min-width: 0;
-  min-height: 58px;
-  border: none;
-  border-radius: 12px;
-  background: #343e52;
-  color: white;
-  font-size: 21px;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-button:active {
-  opacity: 0.7;
-}
-
-.operator {
-  background: #176bce;
-}
-
-.clear {
-  background: #bd414c;
-}
-
-.zero {
-  grid-column: span 2;
-}
-
-footer {
-  margin-top: 18px;
-  text-align: center;
-  font-size: 12px;
-  color: #aab4c8;
-}
-</style></head><body>
-<main class="calculator">
-  <h1>Zafar's Calculator</h1>  <div id="expression" aria-live="polite"></div>
-  <input id="display" value="0" readonly aria-label="Result">  <div class="buttons">
-    <button class="clear" onclick="clearDisplay()">AC</button>
-    <button onclick="backspace()">DEL</button>
-    <button onclick="percent()">%</button>
-    <button class="operator" onclick="choose('/')">÷</button><button onclick="digit('7')">7</button>
-<button onclick="digit('8')">8</button>
-<button onclick="digit('9')">9</button>
-<button class="operator" onclick="choose('*')">×</button>
-
-<button onclick="digit('4')">4</button>
-<button onclick="digit('5')">5</button>
-<button onclick="digit('6')">6</button>
-<button class="operator" onclick="choose('-')">−</button>
-
-<button onclick="digit('1')">1</button>
-<button onclick="digit('2')">2</button>
-<button onclick="digit('3')">3</button>
-<button class="operator" onclick="choose('+')">+</button>
-
-<button onclick="sign()">+/−</button>
-<button class="zero" onclick="digit('0')">0</button>
-<button onclick="digit('.')">.</button>
-<button class="operator" onclick="calculate()">=</button>
-
-  </div>  <footer>Built by Zafar | Calculator Web App</footer>
-</main><script>
-const display = document.getElementById("display");
-const expression = document.getElementById("expression");
-
-let first = null;
-let operator = null;
-let fresh = true;
-let finished = false;
-
-const symbols = {
-  "+": "+",
-  "-": "−",
-  "*": "×",
-  "/": "÷"
-};
-
-function formatNumber(number) {
-  if (!Number.isFinite(number)) {
-    return String(number);
-  }
-
-  return String(Number(number.toPrecision(10)));
-}
-
-function digit(value) {
-  if (finished) {
-    clearDisplay();
-  }
-
-  if (fresh) {
-    display.value = value === "." ? "0." : value;
-    fresh = false;
-    return;
-  }
-
-  if (value === "." && display.value.includes(".")) {
-    return;
-  }
-
-  if (display.value.length >= 15) {
-    return;
-  }
-
-  if (display.value === "0" && value !== ".") {
-    display.value = value;
-  } else {
-    display.value += value;
-  }
-}
-
-function choose(op) {
-  if (display.value === "Cannot divide by zero") {
-    clearDisplay();
-    return;
-  }
-
-  if (operator !== null && !fresh) {
-    calculate();
-  }
-
-  first = Number(display.value);
-  operator = op;
-  fresh = true;
-  finished = false;
-
-  expression.textContent =
-    formatNumber(first) + " " + symbols[operator];
-}
-
-function calculate() {
-  if (operator === null || first === null || fresh) {
-    return;
-  }
-
-  const second = Number(display.value);
-  const operationText =
-    formatNumber(first) + " " +
-    symbols[operator] + " " +
-    formatNumber(second) + " =";
-
-  let result;
-
-  switch (operator) {
-    case "+":
-      result = first + second;
-      break;
-    case "-":
-      result = first - second;
-      break;
-    case "*":
-      result = first * second;
-      break;
-    case "/":
-      if (second === 0) {
-        expression.textContent = operationText;
-        display.value = "Cannot divide by zero";
-        first = null;
-        operator = null;
-        fresh = true;
-        finished = true;
-        return;
-      }
-      result = first / second;
-      break;
-    default:
-      return;
-  }
-
-  expression.textContent = operationText;
-  display.value = formatNumber(result);
-
-  first = null;
-  operator = null;
-  fresh = true;
-  finished = true;
-}
-
-function clearDisplay() {
-  display.value = "0";
-  expression.textContent = "";
-
-  first = null;
-  operator = null;
-  fresh = true;
-  finished = false;
-}
-
-function backspace() {
-  if (finished || fresh) {
-    return;
-  }
-
-  display.value =
-    display.value.length > 1
-      ? display.value.slice(0, -1)
-      : "0";
-
-  if (display.value === "-") {
-    display.value = "0";
-  }
-}
-
-function percent() {
-  if (display.value === "Cannot divide by zero") {
-    clearDisplay();
-    return;
-  }
-
-  display.value = formatNumber(Number(display.value) / 100);
-  fresh = true;
-  finished = false;
-}
-
-function sign() {
-  if (display.value === "Cannot divide by zero") {
-    clearDisplay();
-    return;
-  }
-
-  const number = Number(display.value);
-
-  if (number !== 0) {
-    display.value = formatNumber(-number);
-  }
-}
-</script>
-</body>
-</html>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#111c2e;--text:#f3f6fc;--muted:#9eabc0;--accent:#6ee7b7;--line:#2a3a53;--danger:#ff9b9b}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#1b2b45,#0b1220 60%);font-family:system-ui,sans-serif;color:var(--text);padding:22px 14px}.wrap{width:min(100%,430px);margin:auto}.brand{text-align:center;margin:8px 0 22px}.brand .logo{font-size:35px}.brand h1{font-size:25px;margin:5px}.brand p,.sub,.welcome{color:var(--muted);font-size:14px}.card{background:#111c2ef5;border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 20px 60px #0004}h2{font-size:21px;margin:0 0 7px}.sub{margin:0 0 18px}label{display:block;font-size:13px;color:#c6d0e0;margin:13px 0 6px}input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:#0b1424;color:var(--text);font-size:16px}button{border:0;border-radius:12px;padding:13px 14px;font-size:15px;font-weight:650;cursor:pointer}.primary{width:100%;background:var(--accent);color:#082017;margin-top:17px}.linkbtn{background:transparent;color:var(--accent);padding:7px 4px}.row,.topline,.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.switch{text-align:center;color:var(--muted);font-size:14px;margin-top:15px}.message{min-height:20px;margin-top:12px;font-size:13px;color:var(--danger);overflow-wrap:anywhere}.hidden{display:none!important}.smallbtn{background:#26364e;color:white;padding:9px 12px;font-size:13px}.display{background:#09111e;border:1px solid var(--line);border-radius:16px;padding:18px 15px;text-align:right;margin-bottom:14px;min-height:105px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}.expression{color:var(--muted);font-size:15px;min-height:23px;overflow-wrap:anywhere}.result{font-size:clamp(30px,9vw,42px);font-weight:650;overflow-wrap:anywhere}.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.key{background:#1c2a40;color:var(--text);min-height:54px;font-size:19px}.key.op{background:#263a54;color:var(--accent)}.key.danger{color:#ffb4b4;background:#402733}.key.equal{background:var(--accent);color:#082017}.key.zero{grid-column:span 2}.sectionhead{margin:22px 0 8px}.sectionhead h3{font-size:16px;margin:0}.history{display:grid;gap:8px}.historyitem{border:1px solid var(--line);background:#0d1727;border-radius:12px;padding:11px 12px}.histexpr,.empty{font-size:13px;color:var(--muted);overflow-wrap:anywhere}.histresult{font-size:17px;font-weight:650;overflow-wrap:anywhere}.empty{padding:12px 2px}.foot{color:#8190a8;text-align:center;font-size:11px;margin:18px 4px 0;line-height:1.5}
+</style></head><body><main class="wrap">
+<header class="brand"><div class="logo">🧮</div><h1>Zafar's Calculator</h1><p>A simple calculator with your own saved history</p></header>
+<section id="authCard" class="card">
+<div id="loginPane"><h2>Welcome back</h2><p class="sub">Sign in to open your calculator.</p><form id="loginForm"><label for="loginEmail">Email address</label><input id="loginEmail" type="email" autocomplete="email" required><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" required><button class="primary" type="submit">Log in</button></form><div class="row"><button class="linkbtn" id="forgotBtn" type="button">Forgot password?</button></div><div class="switch">New here? <button class="linkbtn" id="showSignup" type="button">Create an account</button></div></div>
+<div id="signupPane" class="hidden"><h2>Create account</h2><p class="sub">Use an email address you can access.</p><form id="signupForm"><label for="signupName">Name</label><input id="signupName" type="text" autocomplete="name" maxlength="80" required><label for="signupEmail">Email address</label><input id="signupEmail" type="email" autocomplete="email" required><label for="signupPassword">Create password (at least 6 characters)</label><input id="signupPassword" type="password" autocomplete="new-password" minlength="6" required><label for="confirmPassword">Confirm password</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" required><button class="primary" type="submit">Sign up</button></form><div class="switch">Already registered? <button class="linkbtn" id="showLogin" type="button">Log in</button></div></div><div id="authMessage" class="message" role="status" aria-live="polite"></div></section>
+<section id="appCard" class="card hidden"><div class="topline"><div><strong>Zafar's Calculator</strong><div id="welcomeText" class="welcome"></div></div><button id="logoutBtn" class="smallbtn" type="button">Log out</button></div>
+<div class="display"><div id="expression" class="expression"></div><div id="display" class="result" aria-live="polite">0</div></div>
+<div class="keys"><button class="key danger" data-action="clear">AC</button><button class="key danger" data-action="backspace">⌫</button><button class="key op" data-action="percent">%</button><button class="key op" data-op="/">÷</button><button class="key" data-digit="7">7</button><button class="key" data-digit="8">8</button><button class="key" data-digit="9">9</button><button class="key op" data-op="*">×</button><button class="key" data-digit="4">4</button><button class="key" data-digit="5">5</button><button class="key" data-digit="6">6</button><button class="key op" data-op="-">−</button><button class="key" data-digit="1">1</button><button class="key" data-digit="2">2</button><button class="key" data-digit="3">3</button><button class="key op" data-op="+">+</button><button class="key zero" data-digit="0">0</button><button class="key" data-action="decimal">.</button><button class="key equal" data-action="equals">=</button></div>
+<div class="sectionhead"><h3>Calculation history</h3><button id="refreshHistory" class="linkbtn" type="button">Refresh</button></div><div id="history" class="history"><div class="empty">Your calculations will appear here.</div></div><p id="appMessage" class="message" role="status" aria-live="polite"></p></section>
+<p class="foot">Firebase handles account sign-in. Your calculation history is saved to your account. Apply the Firestore Security Rules provided with this file before testing history.</p></main>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{getFirestore,collection,addDoc,query,orderBy,limit,onSnapshot,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const firebaseConfig={apiKey:"AIzaSyDcWenkvC-igE6TTiqvB6JM7oAmmMrmv4",authDomain:"zafar-calculator.firebaseapp.com",projectId:"zafar-calculator",storageBucket:"zafar-calculator.firebasestorage.app",messagingSenderId:"58351015796",appId:"1:58351015796:web:d1b1a0ba56dba60a25be21",measurementId:"G-6SC77WQHE7"};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);let currentUser=null,stopHistory=null,current="0",stored=null,operator=null,fresh=false,expressionText="";
+function authMsg(t,ok=false){$("authMessage").style.color=ok?"var(--accent)":"var(--danger)";$("authMessage").textContent=t}function appMsg(t,ok=false){$("appMessage").style.color=ok?"var(--accent)":"var(--danger)";$("appMessage").textContent=t}
+function errText(e){return({"auth/email-already-in-use":"This email is already registered. Please log in.","auth/invalid-email":"Please enter a valid email address.","auth/weak-password":"Choose a password with at least 6 characters.","auth/invalid-credential":"Email or password is incorrect.","auth/user-not-found":"No account found for these details.","auth/wrong-password":"Email or password is incorrect.","auth/too-many-requests":"Too many attempts. Please wait and try again.","auth/network-request-failed":"Network issue. Check your internet connection.","auth/operation-not-allowed":"Enable Email/Password in Firebase Authentication."})[e?.code]||e?.message||"Something went wrong. Please try again."}
+$("showSignup").onclick=()=>{$("loginPane").classList.add("hidden");$("signupPane").classList.remove("hidden");authMsg("")};$("showLogin").onclick=()=>{$("signupPane").classList.add("hidden");$("loginPane").classList.remove("hidden");authMsg("")};
+$("loginForm").onsubmit=async e=>{e.preventDefault();authMsg("Logging in…",true);try{await signInWithEmailAndPassword(auth,$("loginEmail").value.trim(),$("loginPassword").value)}catch(x){authMsg(errText(x))}};
+$("signupForm").onsubmit=async e=>{e.preventDefault();let name=$("signupName").value.trim(),email=$("signupEmail").value.trim(),p=$("signupPassword").value;if(!name){authMsg("Please enter your name.");return}if(p!==$("confirmPassword").value){authMsg("Passwords do not match.");return}if(p.length<6){authMsg("Password must have at least 6 characters.");return}authMsg("Creating account…",true);try{let c=await createUserWithEmailAndPassword(auth,email,p);await updateProfile(c.user,{displayName:name})}catch(x){authMsg(errText(x))}};
+$("forgotBtn").onclick=async()=>{let email=$("loginEmail").value.trim();if(!email){authMsg("Enter your email address above first.");return}try{await sendPasswordResetEmail(auth,email);authMsg("If an account exists for that address, a reset email has been sent.",true)}catch(x){authMsg(errText(x))}};
+$("logoutBtn").onclick=async()=>{try{await signOut(auth)}catch(x){appMsg(errText(x))}};
+onAuthStateChanged(auth,user=>{currentUser=user;if(stopHistory){stopHistory();stopHistory=null}if(user){$("authCard").classList.add("hidden");$("appCard").classList.remove("hidden");$("welcomeText").textContent="Signed in as "+(user.displayName||user.email||"user");resetCalc();loadHistory(user)}else{$("appCard").classList.add("hidden");$("authCard").classList.remove("hidden");$("loginPane").classList.remove("hidden");$("signupPane").classList.add("hidden");$("history").innerHTML='<div class="empty">Log in to see your history.</div>'}});
+function render(){$("display").textContent=current;$("expression").textContent=expressionText}function resetCalc(){current="0";stored=null;operator=null;fresh=false;expressionText="";render();appMsg("")}
+function digit(n){if(fresh){current=n;fresh=false}else if(current==="0")current=n;else if(current.length<18)current+=n;render()}function decimal(){if(fresh){current="0.";fresh=false}else if(!current.includes("."))current+=".";render()}function backspace(){if(fresh){current="0";fresh=false}else{current=current.length>1?current.slice(0,-1):"0";if(current==="-0"||current==="")current="0"}render()}function percent(){current=String(Number((Number(current)/100).toPrecision(12)));render()}function fmt(n){if(!Number.isFinite(n))throw Error("Cannot divide by zero.");return String(Number(n.toPrecision(12)))}
+function choose(op){if(operator!==null&&!fresh){try{calculate(false)}catch(e){appMsg(e.message);return}}stored=Number(current);operator=op;fresh=true;expressionText=String(stored)+" "+({"+":"+","-":"−","*":"×","/":"÷"}[op]);render()}
+async function calculate(save=true){if(operator===null||stored===null)return;let a=stored,b=Number(current),op=operator,v;if(op==="+")v=a+b;else if(op==="-")v=a-b;else if(op==="*")v=a*b;else if(op==="/"){if(b===0)throw Error("Cannot divide by zero.");v=a/b}let result=fmt(v),exp=String(a)+" "+({"+":"+","-":"−","*":"×","/":"÷"}[op])+" "+String(b);current=result;expressionText=exp+" =";stored=null;operator=null;fresh=true;render();if(save&&currentUser)await saveCalc(exp,result)}
+async function saveCalc(exp,result){try{await addDoc(collection(db,"users",currentUser.uid,"history"),{expression:exp,result,createdAt:serverTimestamp()});appMsg("Calculation saved to your history.",true)}catch(e){appMsg("Result calculated, but history could not save. Check Firestore Rules and internet.")}}
+function loadHistory(user){$("history").innerHTML='<div class="empty">Loading history…</div>';let q=query(collection(db,"users",user.uid,"history"),orderBy("createdAt","desc"),limit(20));stopHistory=onSnapshot(q,s=>{if(s.empty){$("history").innerHTML='<div class="empty">No calculations yet. Your results will appear here.</div>';return}$("history").innerHTML="";s.forEach(doc=>{let d=doc.data(),item=document.createElement("div"),ex=document.createElement("div"),res=document.createElement("div");item.className="historyitem";ex.className="histexpr";ex.textContent=d.expression||"Calculation";res.className="histresult";res.textContent="= "+(d.result??"");item.append(ex,res);$("history").append(item)})},()=>{$("history").innerHTML='<div class="empty">Could not load history. Check Firestore Rules.</div>'})}
+$("refreshHistory").onclick=()=>{if(currentUser)loadHistory(currentUser)};document.querySelector(".keys").onclick=async e=>{let b=e.target.closest("button");if(!b)return;try{if(b.dataset.digit!==undefined)digit(b.dataset.digit);else if(b.dataset.op)choose(b.dataset.op);else if(b.dataset.action==="clear")resetCalc();else if(b.dataset.action==="backspace")backspace();else if(b.dataset.action==="percent")percent();else if(b.dataset.action==="decimal")decimal();else if(b.dataset.action==="equals")await calculate(true)}catch(x){appMsg(x.message||"Calculation error.")}};
+document.addEventListener("keydown",async e=>{if($("appCard").classList.contains("hidden"))return;if(/^[0-9]$/.test(e.key))digit(e.key);else if(e.key===".")decimal();else if(["+","-","*","/"].includes(e.key))choose(e.key);else if(e.key==="Enter"||e.key==="="){e.preventDefault();try{await calculate(true)}catch(x){appMsg(x.message)}}else if(e.key==="Backspace")backspace();else if(e.key==="Escape")resetCalc()});
+</script></body></html>
