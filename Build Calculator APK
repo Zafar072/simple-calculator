@@ -1,120 +1,187 @@
 name: Build Calculator APK
 
 on:
-workflow_dispatch:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/build-apk.yml'
 
-permissi"ons":
-contents: read
+permissions:
+  contents: read
 
 jobs:
-build:
-runs-on: ubuntu-22.04
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-22.04
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  - name: Set up Java
-    uses: actions/setup-java@v4
-    with:
-      distribution: temurin
-      java-version: '17'
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-  - name: Set up Android SDK
-    uses: android-actions/setup-android@v3
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-  - name: Install Android build tools
-    run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-  - name: Prepare Android project
-    run: |
-      mkdir -p app/src/main/assets app/src/main/java/com/zafar/calculator
-      cp index.html app/src/main/assets/index.html
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
-      cat > settings.gradle <<'EOF'
-      pluginManagement {
-          repositories {
-              google()
-              mavenCentral()
-              gradlePluginPortal()
+      - name: Create Android project
+        run: |
+          mkdir -p app/src/main/java/com/zafar/calculator
+
+          cat > settings.gradle <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
           }
-      }
-      dependencyResolutionManagement {
-          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-          repositories {
-              google()
-              mavenCentral()
+
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
           }
-      }
-      rootProject.name = "ZafarCalculator"
-      include(":app")
-      EOF
 
-      cat > build.gradle <<'EOF'
-      plugins {
-          id 'com.android.application' version '8.6.1' apply false
-      }
-      EOF
+          rootProject.name = "CalculatorApp"
+          include(":app")
+          EOF
 
-      cat > app/build.gradle <<'EOF'
-      plugins {
-          id 'com.android.application'
-      }
-      android {
-          namespace 'com.zafar.calculator'
-          compileSdk 35
-          defaultConfig {
-              applicationId 'com.zafar.calculator'
-              minSdk 23
-              targetSdk 28
-              versionCode 1
-              versionName '1.0'
+          cat > build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.7.3' apply false
           }
-      }
-      EOF
+          EOF
 
-      cat > app/src/main/AndroidManifest.xml <<'EOF'
-      <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-          <application
-              android:theme="@android:style/Theme.Material.Light.NoActionBar"
-              android:label="Zafar's Calculator">
-              <activity
-                  android:name=".MainActivity"
-                  android:exported="true">
-                  <intent-filter>
-                      <action android:name="android.intent.action.MAIN"/>
-                      <category android:name="android.intent.category.LAUNCHER"/>
-                  </intent-filter>
-              </activity>
-          </application>
-      </manifest>
-      EOF
-
-      cat > app/src/main/java/com/zafar/calculator/MainActivity.java <<'EOF'
-      package com.zafar.calculator;
-      import android.app.Activity;
-      import android.os.Bundle;
-      import android.webkit.WebView;
-      import android.webkit.WebViewClient;
-
-      public class MainActivity extends Activity {
-          @Override
-          public void onCreate(Bundle savedInstanceState) {
-              super.onCreate(savedInstanceState);
-              WebView web = new WebView(this);
-              web.getSettings().setJavaScriptEnabled(true);
-              web.setWebViewClient(new WebViewClient());
-              setContentView(web);
-              web.loadUrl("file:///android_asset/index.html");
+          cat > app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
           }
-      }
-      EOF
 
-  - name: Build APK
-    run: gradle --no-daemon assembleDebug
+          android {
+              namespace 'com.zafar.calculator'
+              compileSdk 35
 
-  - name: Upload APK artifact
-    uses: actions/upload-artifact@v4
-    with:
-      name: zafar-calculator-apk
-      path: app/build/outputs/apk/debug/app-debug.apk
+              defaultConfig {
+                  applicationId 'com.zafar.calculator'
+                  minSdk 23
+                  targetSdk 28
+                  versionCode 1
+                  versionName '1.0'
+              }
+          }
+          EOF
+
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <uses-permission android:name="android.permission.INTERNET" />
+
+              <application
+                  android:allowBackup="false"
+                  android:label="Zafar Calculator"
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          cat > app/src/main/java/com/zafar/calculator/MainActivity.java <<'EOF'
+          package com.zafar.calculator;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebSettings;
+
+          public class MainActivity extends Activity {
+
+              private WebView webView;
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  webView = new WebView(this);
+
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+
+                  webView.setWebViewClient(new WebViewClient());
+                  webView.setWebChromeClient(new WebChromeClient());
+
+                  setContentView(webView);
+
+                  if (savedInstanceState == null) {
+                      webView.loadUrl(
+                          "https://zafar072.github.io/simple-calculator/"
+                      );
+                  } else {
+                      webView.restoreState(savedInstanceState);
+                  }
+              }
+
+              @Override
+              protected void onSaveInstanceState(Bundle outState) {
+                  super.onSaveInstanceState(outState);
+                  webView.saveState(outState);
+              }
+
+              @Override
+              public void onBackPressed() {
+                  if (webView != null && webView.canGoBack()) {
+                      webView.goBack();
+                  } else {
+                      super.onBackPressed();
+                  }
+              }
+
+              @Override
+              protected void onDestroy() {
+                  if (webView != null) {
+                      webView.destroy();
+                  }
+                  super.onDestroy();
+              }
+          }
+          EOF
+
+      - name: Build debug APK
+        run: gradle --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: calculator-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
